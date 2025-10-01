@@ -52,11 +52,14 @@ class ApiClient {
     formData.append('username', email); // Email goes in username field
     formData.append('password', password);
     
+    console.log('Sending login request with:', { username: email });
     const response = await this.client.post<LoginResponse>('/api/v1/auth/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
+    console.log('Raw API response:', response);
+    console.log('Response data:', response.data);
     return response.data;
   }
 

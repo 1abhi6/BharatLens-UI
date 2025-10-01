@@ -16,7 +16,9 @@ export const useAuth = () => {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Attempting login...');
       const response = await api.login(email, password);
+      console.log('Login response:', response);
       localStorage.setItem('access_token', response.access_token);
       setIsAuthenticated(true);
       toast({
@@ -25,6 +27,8 @@ export const useAuth = () => {
       });
       navigate('/chat');
     } catch (error: any) {
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
       toast({
         title: "Login failed",
         description: error.response?.data?.detail || "Invalid credentials",
