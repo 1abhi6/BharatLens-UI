@@ -55,7 +55,6 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     // Optimistically add user message
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
-      session_id: sessionId,
       role: 'user',
       content: messageContent,
       created_at: new Date().toISOString(),
@@ -63,13 +62,20 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage]);
 
     try {
-      const response = await api.sendMessage(sessionId, messageContent);
-      // Replace temp message and add assistant response
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempUserMessage.id),
-        { ...tempUserMessage, id: response.id },
-        response
-      ]);
+      // Backend returns the assistant's response, not the user message
+      const assistantResponse = await api.sendMessage(sessionId, messageContent);
+      
+      // Remove temp message and add both user and assistant messages
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== tempUserMessage.id);
+        // Create proper user message with server timestamp
+        const userMessage: Message = {
+          ...tempUserMessage,
+          id: `user-${Date.now()}`, // Generate proper ID
+          created_at: assistantResponse.created_at, // Use server time
+        };
+        return [...filtered, userMessage, assistantResponse];
+      });
     } catch (error) {
       toast({
         title: "Error sending message",

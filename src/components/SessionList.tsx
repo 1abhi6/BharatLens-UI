@@ -37,6 +37,8 @@ export const SessionList = ({ activeSessionId, onSessionSelect }: SessionListPro
   const createNewSession = async () => {
     try {
       const newSession = await api.createSession({ title: 'New Chat' });
+      // Store session locally since backend doesn't have GET /sessions
+      api.storeSession(newSession);
       setSessions([newSession, ...sessions]);
       onSessionSelect(newSession.id);
       toast({

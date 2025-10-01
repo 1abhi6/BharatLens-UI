@@ -37,19 +37,25 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async register(email: string, password: string, full_name: string): Promise<User> {
-    const response = await this.client.post<User>('/auth/register', {
+  async register(email: string, password: string, full_name?: string): Promise<User> {
+    const response = await this.client.post<User>('/api/v1/auth/register', {
       email,
       password,
-      full_name,
+      full_name: full_name || null,
     });
     return response.data;
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await this.client.post<LoginResponse>('/auth/login', {
-      email,
-      password,
+    // OAuth2 password flow uses form-encoded data with 'username' field
+    const formData = new URLSearchParams();
+    formData.append('username', email); // Email goes in username field
+    formData.append('password', password);
+    
+    const response = await this.client.post<LoginResponse>('/api/v1/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
     return response.data;
   }
@@ -60,15 +66,37 @@ class ApiClient {
     return response.data;
   }
 
+  // Note: Backend doesn't have a GET /sessions endpoint, so we'll store sessions locally
   async getSessions(): Promise<ChatSession[]> {
-    const response = await this.client.get<ChatSession[]>('/api/v1/chat/sessions');
-    return response.data;
+    // Retrieve sessions from localStorage as fallback
+    const stored = localStorage.getItem('chat_sessions');
+    if (stored) {
+      const sessions = JSON.parse(stored) as ChatSession[];
+      return sessions.sort((a, b) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+    }
+    return [];
   }
 
-  async getSessionMessages(sessionId: string, skip = 0, limit = 20): Promise<Message[]> {
+  // Helper to store session locally
+  storeSession(session: ChatSession): void {
+    const stored = localStorage.getItem('chat_sessions');
+    const sessions = stored ? JSON.parse(stored) : [];
+    const existing = sessions.findIndex((s: ChatSession) => s.id === session.id);
+    
+    if (existing >= 0) {
+      sessions[existing] = session;
+    } else {
+      sessions.unshift(session);
+    }
+    
+    localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+  }
+
+  async getSessionMessages(sessionId: string): Promise<Message[]> {
     const response = await this.client.get<Message[]>(
-      `/api/v1/chat/sessions/${sessionId}/messages`,
-      { params: { skip, limit } }
+      `/api/v1/chat/sessions/${sessionId}/messages`
     );
     return response.data;
   }
