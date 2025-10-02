@@ -47,20 +47,35 @@ class ApiClient {
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    // OAuth2 password flow uses form-encoded data with 'username' field
-    const formData = new URLSearchParams();
-    formData.append('username', email); // Email goes in username field
-    formData.append('password', password);
-    
-    console.log('Sending login request with:', { username: email });
-    const response = await this.client.post<LoginResponse>('/api/v1/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-    console.log('Raw API response:', response);
-    console.log('Response data:', response.data);
-    return response.data;
+    try {
+      // OAuth2 password flow uses form-encoded data with 'username' field
+      const formData = new URLSearchParams();
+      formData.append('username', email); // Email goes in username field
+      formData.append('password', password);
+      
+      console.log('Sending login request to:', `${API_BASE_URL}/api/v1/auth/login`);
+      console.log('Form data:', { username: email });
+      
+      const response = await this.client.post<LoginResponse>('/api/v1/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      
+      console.log('✅ Login successful!');
+      console.log('Status:', response.status);
+      console.log('Response data:', response.data);
+      console.log('Access token:', response.data.access_token?.substring(0, 20) + '...');
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Login request failed');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Response status:', error.response?.status);
+      console.error('Response data:', error.response?.data);
+      throw error;
+    }
   }
 
   // Chat session endpoints
