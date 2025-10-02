@@ -57,6 +57,8 @@ export const useAuth = () => {
   };
 
   const logout = () => {
+    // Clear user-specific sessions before removing token
+    api.clearUserSessions();
     localStorage.removeItem('access_token');
     setIsAuthenticated(false);
     toast({

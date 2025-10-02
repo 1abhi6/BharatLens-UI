@@ -10,8 +10,13 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
   const isUser = message.role === 'user';
   
   const formatTime = (dateString: string) => {
+    // Parse ISO date string and convert to local time
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
   return (

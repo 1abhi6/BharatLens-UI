@@ -53,15 +53,26 @@ export const SessionList = ({ activeSessionId, onSessionSelect }: SessionListPro
   };
 
   const formatDate = (dateString: string) => {
+    // Parse ISO date string and convert to local time
     const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInHours = diffInMs / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // Show time in local timezone
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
     }
-    return date.toLocaleDateString();
+    // Show date in local timezone
+    return date.toLocaleDateString([], {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
   };
 
   return (

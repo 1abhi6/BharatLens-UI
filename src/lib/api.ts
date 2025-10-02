@@ -78,16 +78,37 @@ class ApiClient {
     }
   }
 
+  // Get current user
+  async getCurrentUser(): Promise<User> {
+    const response = await this.client.get<User>('/api/v1/users/me');
+    return response.data;
+  }
+
   // Chat session endpoints
   async createSession(data?: CreateSessionRequest): Promise<ChatSession> {
     const response = await this.client.post<ChatSession>('/api/v1/chat/sessions', data || {});
     return response.data;
   }
 
-  // Note: Backend doesn't have a GET /sessions endpoint, so we'll store sessions locally
+  // Helper to get user-specific storage key
+  private getUserSessionKey(): string {
+    const token = localStorage.getItem('access_token');
+    if (!token) return 'chat_sessions_guest';
+    
+    // Parse JWT to get user ID (simple parsing, payload is base64 encoded)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return `chat_sessions_${payload.sub}`;
+    } catch {
+      return 'chat_sessions_guest';
+    }
+  }
+
+  // Note: Backend doesn't have a GET /sessions endpoint, so we'll store sessions locally per user
   async getSessions(): Promise<ChatSession[]> {
-    // Retrieve sessions from localStorage as fallback
-    const stored = localStorage.getItem('chat_sessions');
+    // Retrieve sessions from user-specific localStorage key
+    const storageKey = this.getUserSessionKey();
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       const sessions = JSON.parse(stored) as ChatSession[];
       return sessions.sort((a, b) => 
@@ -97,9 +118,10 @@ class ApiClient {
     return [];
   }
 
-  // Helper to store session locally
+  // Helper to store session locally for current user
   storeSession(session: ChatSession): void {
-    const stored = localStorage.getItem('chat_sessions');
+    const storageKey = this.getUserSessionKey();
+    const stored = localStorage.getItem(storageKey);
     const sessions = stored ? JSON.parse(stored) : [];
     const existing = sessions.findIndex((s: ChatSession) => s.id === session.id);
     
@@ -109,7 +131,13 @@ class ApiClient {
       sessions.unshift(session);
     }
     
-    localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+    localStorage.setItem(storageKey, JSON.stringify(sessions));
+  }
+
+  // Clear sessions for current user
+  clearUserSessions(): void {
+    const storageKey = this.getUserSessionKey();
+    localStorage.removeItem(storageKey);
   }
 
   async getSessionMessages(sessionId: string): Promise<Message[]> {
