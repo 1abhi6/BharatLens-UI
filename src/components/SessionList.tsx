@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { ChatSession } from '@/types/chat';
@@ -45,6 +45,25 @@ export const SessionList = ({ activeSessionId, onSessionSelect }: SessionListPro
     } catch (error) {
       toast({
         title: "Error creating chat",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent session selection when clicking delete
+    try {
+      await api.deleteSession(sessionId);
+      setSessions(sessions.filter(s => s.id !== sessionId));
+      if (activeSessionId === sessionId) {
+        onSessionSelect(sessions[0]?.id);
+      }
+      toast({
+        title: "Chat deleted",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting chat",
         variant: "destructive",
       });
     }
@@ -108,7 +127,7 @@ export const SessionList = ({ activeSessionId, onSessionSelect }: SessionListPro
                 key={session.id}
                 onClick={() => onSessionSelect(session.id)}
                 className={cn(
-                  "w-full rounded-lg p-3 text-left transition-colors hover:bg-[hsl(var(--sidebar-hover))]",
+                  "group w-full rounded-lg p-3 text-left transition-colors hover:bg-[hsl(var(--sidebar-hover))]",
                   activeSessionId === session.id && "bg-[hsl(var(--session-active))]"
                 )}
               >
@@ -121,7 +140,16 @@ export const SessionList = ({ activeSessionId, onSessionSelect }: SessionListPro
                       {formatDate(session.created_at)}
                     </p>
                   </div>
-                  <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={(e) => deleteSession(session.id, e)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10"
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
               </button>
             ))}

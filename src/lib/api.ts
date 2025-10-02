@@ -112,6 +112,10 @@ class ApiClient {
     );
     return response.data;
   }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.client.delete(`/api/v1/chat/sessions/${sessionId}`);
+  }
 }
 
 export const api = new ApiClient();
