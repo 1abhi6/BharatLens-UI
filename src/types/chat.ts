@@ -15,10 +15,11 @@ export interface LoginResponse {
 
 export interface ChatSession {
   id: string; // UUID
-  user_id: number;
+  user_id?: number;
   title: string | null;
   created_at: string;
   updated_at: string;
+  messages?: Message[]; // Optional, included when fetching sessions list
 }
 
 export interface Message {

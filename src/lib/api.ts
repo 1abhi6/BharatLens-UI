@@ -90,54 +90,12 @@ class ApiClient {
     return response.data;
   }
 
-  // Helper to get user-specific storage key
-  private getUserSessionKey(): string {
-    const token = localStorage.getItem('access_token');
-    if (!token) return 'chat_sessions_guest';
-    
-    // Parse JWT to get user ID (simple parsing, payload is base64 encoded)
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return `chat_sessions_${payload.sub}`;
-    } catch {
-      return 'chat_sessions_guest';
-    }
-  }
-
-  // Note: Backend doesn't have a GET /sessions endpoint, so we'll store sessions locally per user
+  // Get all sessions for current user from backend
   async getSessions(): Promise<ChatSession[]> {
-    // Retrieve sessions from user-specific localStorage key
-    const storageKey = this.getUserSessionKey();
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      const sessions = JSON.parse(stored) as ChatSession[];
-      return sessions.sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-    }
-    return [];
-  }
-
-  // Helper to store session locally for current user
-  storeSession(session: ChatSession): void {
-    const storageKey = this.getUserSessionKey();
-    const stored = localStorage.getItem(storageKey);
-    const sessions = stored ? JSON.parse(stored) : [];
-    const existing = sessions.findIndex((s: ChatSession) => s.id === session.id);
-    
-    if (existing >= 0) {
-      sessions[existing] = session;
-    } else {
-      sessions.unshift(session);
-    }
-    
-    localStorage.setItem(storageKey, JSON.stringify(sessions));
-  }
-
-  // Clear sessions for current user
-  clearUserSessions(): void {
-    const storageKey = this.getUserSessionKey();
-    localStorage.removeItem(storageKey);
+    const response = await this.client.get<ChatSession[]>('/api/v1/chat/sessions');
+    return response.data.sort((a, b) => 
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
   }
 
   async getSessionMessages(sessionId: string): Promise<Message[]> {
