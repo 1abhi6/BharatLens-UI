@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { ChatSession } from '@/types/chat';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +18,8 @@ interface SessionListProps {
 export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle }: SessionListProps) => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState('');
 
   const loadSessions = async () => {
     try {
@@ -36,11 +40,37 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
     loadSessions();
   }, []);
 
+  const handleCreateNewSession = () => {
+    setNewChatTitle('');
+    setIsDialogOpen(true);
+  };
+
   const createNewSession = async () => {
+    const title = newChatTitle.trim();
+    
+    if (!title) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your chat",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (title.length > 20) {
+      toast({
+        title: "Title too long",
+        description: "Title must be 20 characters or less",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const newSession = await api.createSession({ title: 'New Chat' });
+      const newSession = await api.createSession({ title });
       setSessions([newSession, ...sessions]);
       onSessionSelect(newSession.id);
+      setIsDialogOpen(false);
       toast({
         title: "New chat created",
       });
@@ -105,13 +135,14 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
       )}
       
       <div className={cn(
-        "fixed md:relative inset-y-0 left-0 z-50 flex h-full flex-col border-r border-border bg-[hsl(var(--sidebar-bg))] transition-transform duration-300 ease-in-out",
-        "w-80",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        !isOpen && "md:w-0 md:border-0"
+        "fixed md:relative inset-y-0 left-0 z-50 flex h-full flex-col border-r border-border bg-[hsl(var(--sidebar-bg))] transition-all duration-300 ease-in-out",
+        isOpen ? "w-80 translate-x-0" : "w-0 -translate-x-full md:translate-x-0 md:w-0 md:border-0 md:overflow-hidden"
       )}>
         {/* Header */}
-        <div className="border-b border-border p-4">
+        <div className={cn(
+          "border-b border-border p-4 transition-opacity duration-300",
+          !isOpen && "md:opacity-0 md:pointer-events-none"
+        )}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-foreground">Chats</h2>
             <Button
@@ -124,7 +155,7 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
             </Button>
           </div>
           <Button
-            onClick={createNewSession}
+            onClick={handleCreateNewSession}
             className="w-full gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
@@ -133,7 +164,10 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
         </div>
 
         {/* Sessions list */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className={cn(
+          "flex-1 overflow-y-auto p-2 transition-opacity duration-300",
+          !isOpen && "md:opacity-0 md:pointer-events-none"
+        )}>
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -191,6 +225,40 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
           <ChevronRight className="h-4 w-4" />
         </Button>
       )}
+
+      {/* New Chat Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Chat</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Enter chat title (max 20 characters)"
+              value={newChatTitle}
+              onChange={(e) => setNewChatTitle(e.target.value.slice(0, 20))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  createNewSession();
+                }
+              }}
+              maxLength={20}
+              autoFocus
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {newChatTitle.length}/20 characters
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createNewSession}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
