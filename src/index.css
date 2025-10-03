@@ -112,4 +112,53 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Markdown styling for chat messages */
+  .prose {
+    @apply text-[hsl(var(--chat-assistant-foreground))];
+  }
+  
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    @apply text-[hsl(var(--chat-assistant-foreground))] font-semibold;
+  }
+  
+  .prose a {
+    @apply text-primary hover:underline;
+  }
+  
+  .prose code {
+    @apply bg-muted px-1 py-0.5 rounded text-sm;
+  }
+  
+  .prose pre {
+    @apply bg-muted p-3 rounded-lg overflow-x-auto;
+  }
+  
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+  
+  .prose ul, .prose ol {
+    @apply ml-4;
+  }
+  
+  .prose li {
+    @apply my-1;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-primary pl-4 italic;
+  }
+  
+  .prose table {
+    @apply w-full border-collapse;
+  }
+  
+  .prose th, .prose td {
+    @apply border border-border px-3 py-2;
+  }
+  
+  .prose th {
+    @apply bg-muted font-semibold;
+  }
 }

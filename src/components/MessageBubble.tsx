@@ -1,6 +1,8 @@
 import { Message } from '@/types/chat';
 import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MessageBubbleProps {
   message: Message;
@@ -8,9 +10,9 @@ interface MessageBubbleProps {
 
 export const MessageBubble = ({ message }: MessageBubbleProps) => {
   const isUser = message.role === 'user';
+  const isLoading = message.content === '';
   
   const formatTime = (dateString: string) => {
-    // Parse ISO date string and convert to local time
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { 
       hour: '2-digit', 
@@ -41,9 +43,26 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             ? "bg-[hsl(var(--chat-user))] text-[hsl(var(--chat-user-foreground))]" 
             : "bg-[hsl(var(--chat-assistant))] text-[hsl(var(--chat-assistant-foreground))]"
         )}>
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-            {message.content}
-          </p>
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.3s]"></span>
+                <span className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.15s]"></span>
+                <span className="h-2 w-2 animate-bounce rounded-full bg-current"></span>
+              </div>
+              <span className="text-sm">Thinking...</span>
+            </div>
+          ) : isUser ? (
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+              {message.content}
+            </p>
+          ) : (
+            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-ul:my-2 prose-ol:my-2">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
         <span className="mt-1 text-xs text-muted-foreground">
           {formatTime(message.created_at)}

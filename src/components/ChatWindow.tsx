@@ -54,25 +54,34 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
 
     // Optimistically add user message
     const tempUserMessage: Message = {
-      id: `temp-${Date.now()}`,
+      id: `temp-user-${Date.now()}`,
       role: 'user',
       content: messageContent,
       created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempUserMessage]);
+    
+    // Add temporary assistant message for loading state
+    const tempAssistantMessage: Message = {
+      id: `temp-assistant-${Date.now()}`,
+      role: 'assistant',
+      content: '',
+      created_at: new Date().toISOString(),
+    };
+    
+    setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      // Backend returns the assistant's response, not the user message
       const assistantResponse = await api.sendMessage(sessionId, messageContent);
       
-      // Remove temp message and add both user and assistant messages
+      // Replace temp messages with real ones
       setMessages(prev => {
-        const filtered = prev.filter(m => m.id !== tempUserMessage.id);
-        // Create proper user message with server timestamp
+        const filtered = prev.filter(m => 
+          m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
+        );
         const userMessage: Message = {
           ...tempUserMessage,
-          id: `user-${Date.now()}`, // Generate proper ID
-          created_at: assistantResponse.created_at, // Use server time
+          id: `user-${Date.now()}`,
+          created_at: assistantResponse.created_at,
         };
         return [...filtered, userMessage, assistantResponse];
       });
@@ -81,9 +90,11 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         title: "Error sending message",
         variant: "destructive",
       });
-      // Remove temp message on error
-      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
-      setInput(messageContent); // Restore input
+      // Remove temp messages on error
+      setMessages(prev => prev.filter(m => 
+        m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
+      ));
+      setInput(messageContent);
     } finally {
       setIsSending(false);
     }
