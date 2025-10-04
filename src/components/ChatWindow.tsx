@@ -27,8 +27,9 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   const handleScroll = () => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
+      const scrollPercentage = ((scrollHeight - scrollTop - clientHeight) / scrollHeight) * 100;
+      // Show button when scrolled up 10% or more
+      setShowScrollButton(scrollPercentage >= 10);
     }
   };
 
@@ -168,13 +169,15 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
             
             {/* Scroll to bottom button */}
             {showScrollButton && (
-              <Button
-                size="icon"
-                className="fixed bottom-24 right-8 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-10"
-                onClick={() => scrollToBottom()}
-              >
-                <ArrowDown className="h-5 w-5" />
-              </Button>
+              <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-10 flex justify-center">
+                <Button
+                  size="icon"
+                  className="h-10 w-10 rounded-full shadow-lg bg-primary/40 hover:bg-primary transition-all duration-200"
+                  onClick={() => scrollToBottom()}
+                >
+                  <ArrowDown className="h-5 w-5" />
+                </Button>
+              </div>
             )}
           </>
         )}

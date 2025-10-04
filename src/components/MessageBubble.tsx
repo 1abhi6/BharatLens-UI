@@ -17,11 +17,40 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
   const [copied, setCopied] = useState(false);
   
   const formatTime = (dateString: string) => {
+    // Parse ISO string and convert to local browser time
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+    
+    // Show "Just now" for messages within last minute
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    }
+    
+    // Show "X minutes ago" for messages within last hour
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    
+    // Show time for today's messages
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    }
+    
+    // Show date and time for older messages
+    return date.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
 
