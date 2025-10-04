@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { MessageBubble } from './MessageBubble';
 import { api } from '@/lib/api';
 import { Message } from '@/types/chat';
@@ -16,19 +15,43 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+  };
+
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    }
+  };
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 150); // Max height 150px
+      textarea.style.height = `${newHeight}px`;
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollToBottom(false);
   }, [messages]);
 
   useEffect(() => {
     loadMessages();
   }, [sessionId]);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input]);
 
   const loadMessages = async () => {
     setIsLoading(true);
@@ -51,6 +74,11 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     const messageContent = input.trim();
     setInput('');
     setIsSending(true);
+    
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     // Optimistically add user message
     const tempUserMessage: Message = {
@@ -110,7 +138,11 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   return (
     <div className="flex h-full flex-col bg-[hsl(var(--chat-bg))]">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto">
+      <div 
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto relative"
+      >
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -126,26 +158,47 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-2 py-4">
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+          <>
+            <div className="space-y-2 py-4">
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Scroll to bottom button */}
+            {showScrollButton && (
+              <Button
+                size="icon"
+                className="fixed bottom-24 right-8 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-10"
+                onClick={() => scrollToBottom()}
+              >
+                <ArrowDown className="h-5 w-5" />
+              </Button>
+            )}
+          </>
         )}
       </div>
 
       {/* Input area */}
       <div className="border-t border-border bg-card p-4">
         <div className="mx-auto max-w-4xl">
-          <div className="flex gap-2">
-            <Textarea
+          <div className="flex gap-2 items-end">
+            <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder="Type a message..."
-              className="min-h-[60px] resize-none"
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+              style={{ minHeight: '60px', maxHeight: '150px' }}
               disabled={isSending}
+              rows={1}
             />
             <Button
               onClick={handleSend}
