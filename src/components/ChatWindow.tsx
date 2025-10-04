@@ -169,7 +169,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
             
             {/* Scroll to bottom button */}
             {showScrollButton && (
-              <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-10 flex justify-center">
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
                 <Button
                   size="icon"
                   className="h-10 w-10 rounded-full shadow-lg bg-primary/40 hover:bg-primary transition-all duration-200"
