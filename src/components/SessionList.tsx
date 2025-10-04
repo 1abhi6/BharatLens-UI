@@ -135,8 +135,10 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
       )}
       
       <div className={cn(
-        "fixed md:relative inset-y-0 left-0 z-50 flex h-full flex-col border-r border-border bg-[hsl(var(--sidebar-bg))] transition-all duration-300 ease-in-out",
-        isOpen ? "w-80 translate-x-0" : "w-0 -translate-x-full md:translate-x-0 md:w-0 md:border-0 md:overflow-hidden"
+        "fixed md:relative inset-y-0 left-0 z-50 flex h-full flex-col bg-[hsl(var(--sidebar-bg))] transition-all duration-300 ease-in-out",
+        isOpen 
+          ? "w-80 translate-x-0 border-r border-border" 
+          : "w-80 -translate-x-full md:w-0 md:translate-x-0 md:border-0 md:overflow-hidden"
       )}>
         {/* Header */}
         <div className={cn(
@@ -228,7 +230,7 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
 
       {/* New Chat Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-md mx-auto">
           <DialogHeader>
             <DialogTitle>Create New Chat</DialogTitle>
           </DialogHeader>
@@ -249,11 +251,11 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
               {newChatTitle.length}/20 characters
             </p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={createNewSession}>
+            <Button onClick={createNewSession} className="w-full sm:w-auto">
               Create
             </Button>
           </DialogFooter>
