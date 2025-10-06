@@ -22,13 +22,25 @@ export interface ChatSession {
   messages?: Message[]; // Optional, included when fetching sessions list
 }
 
+export interface Attachment {
+  id: string;
+  url: string | null;
+  media_type: "image" | null;
+  metadata_: {
+    filename?: string;
+    voice_style?: string;
+  };
+  audio_url: string | null;
+  created_at: string;
+}
+
 export interface Message {
   id: string; // UUID
+  session_id?: string;
   role: "system" | "user" | "assistant";
   content: string;
   created_at: string;
-  uploaded_file_url?: string;
-  audio_output_url?: string;
+  attachments: Attachment[];
 }
 
 export type VoiceStyle = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, ArrowDown, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { Send, Loader2, ArrowDown, ImageIcon, Paperclip, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MessageBubble } from './MessageBubble';
 import { AudioRecorder } from './AudioRecorder';
+import { CameraCapture } from './CameraCapture';
 import { ChatSettings } from './ChatSettings';
 import { api } from '@/lib/api';
 import { Message, VoiceStyle } from '@/types/chat';
@@ -24,7 +25,8 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
@@ -95,6 +97,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       role: 'user',
       content: messageContent || (fileToSend ? `[${fileToSend.type.startsWith('image/') ? 'Image' : 'Audio'} uploaded]` : ''),
       created_at: new Date().toISOString(),
+      attachments: [],
     };
     
     // Add temporary assistant message for loading state
@@ -103,6 +106,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       role: 'assistant',
       content: '',
       created_at: new Date().toISOString(),
+      attachments: [],
     };
     
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
@@ -116,27 +120,8 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         voiceStyle,
       });
       
-      // Replace temp messages with real ones
-      setMessages(prev => {
-        const filtered = prev.filter(m => 
-          m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
-        );
-        const userMessage: Message = {
-          id: response.message_id,
-          role: 'user',
-          content: messageContent || (fileToSend ? `[${fileToSend.type.startsWith('image/') ? 'Image' : 'Audio'} uploaded]` : ''),
-          created_at: new Date().toISOString(),
-          uploaded_file_url: response.uploaded_file_url,
-        };
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: response.assistant_message,
-          created_at: new Date().toISOString(),
-          audio_output_url: response.audio_output_url,
-        };
-        return [...filtered, userMessage, assistantMessage];
-      });
+      // Reload messages to get the full structure with attachments
+      await loadMessages();
     } catch (error) {
       toast({
         title: "Error sending message",
@@ -153,23 +138,39 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const isImage = file.type.startsWith('image/');
-      const isAudio = file.type.startsWith('audio/');
-      
-      if (!isImage && !isAudio) {
+      if (!file.type.startsWith('image/')) {
         toast({
           title: "Invalid file type",
-          description: "Please select an image or audio file",
+          description: "Please select an image file",
           variant: "destructive",
         });
         return;
       }
-      
       setSelectedFile(file);
     }
+  };
+
+  const handleAudioFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('audio/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an audio file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleCameraCapture = (imageBlob: Blob) => {
+    const file = new File([imageBlob], 'camera-capture.jpg', { type: 'image/jpeg' });
+    setSelectedFile(file);
   };
 
   const handleAudioRecorded = (audioBlob: Blob) => {
@@ -251,24 +252,48 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
           )}
           <div className="flex gap-2 items-end">
             <div className="flex gap-2">
+              {/* Image inputs */}
               <input
-                ref={fileInputRef}
+                ref={imageInputRef}
                 type="file"
-                accept="image/*,audio/*"
-                onChange={handleFileSelect}
+                accept="image/*"
+                onChange={handleImageSelect}
                 className="hidden"
               />
               <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => imageInputRef.current?.click()}
                 className="h-10 w-10"
                 disabled={isSending}
+                title="Select image"
               >
                 <ImageIcon className="h-5 w-5" />
               </Button>
+              <CameraCapture onCapture={handleCameraCapture} />
+              
+              {/* Audio inputs */}
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={() => audioInputRef.current?.click()}
+                className="h-10 w-10"
+                disabled={isSending}
+                title="Select audio file"
+              >
+                <Music className="h-5 w-5" />
+              </Button>
               <AudioRecorder onRecordingComplete={handleAudioRecorded} />
+              
               <ChatSettings
                 audioOutput={audioOutput}
                 voiceStyle={voiceStyle}

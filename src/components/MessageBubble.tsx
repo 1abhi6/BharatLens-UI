@@ -104,21 +104,26 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
               </div>
             ) : (
               <div className="space-y-2">
-                {message.uploaded_file_url && (
-                  <div className="mb-2">
-                    {message.uploaded_file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                {/* Render attachments */}
+                {message.attachments?.map((attachment) => (
+                  <div key={attachment.id} className="mb-2">
+                    {attachment.media_type === 'image' && attachment.url && (
                       <img 
-                        src={message.uploaded_file_url} 
-                        alt="Uploaded" 
+                        src={attachment.url} 
+                        alt={attachment.metadata_?.filename || "Uploaded image"} 
                         className="max-w-full rounded-lg border"
                       />
-                    ) : (
-                      <audio controls className="w-full">
-                        <source src={message.uploaded_file_url} />
-                      </audio>
+                    )}
+                    {attachment.audio_url && (
+                      <div className="mt-2 flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                        <Volume2 className="h-4 w-4" />
+                        <audio controls className="flex-1">
+                          <source src={attachment.audio_url} type="audio/mpeg" />
+                        </audio>
+                      </div>
                     )}
                   </div>
-                )}
+                ))}
                 
                 {isUser ? (
                   <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -129,15 +134,6 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.content}
                     </ReactMarkdown>
-                  </div>
-                )}
-
-                {message.audio_output_url && !isUser && (
-                  <div className="mt-2 flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                    <Volume2 className="h-4 w-4" />
-                    <audio controls className="flex-1">
-                      <source src={message.audio_output_url} type="audio/mpeg" />
-                    </audio>
                   </div>
                 )}
               </div>
