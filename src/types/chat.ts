@@ -27,7 +27,11 @@ export interface Message {
   role: "system" | "user" | "assistant";
   content: string;
   created_at: string;
+  uploaded_file_url?: string;
+  audio_output_url?: string;
 }
+
+export type VoiceStyle = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 
 export interface CreateSessionRequest {
   title?: string;

@@ -1,5 +1,5 @@
 import { Message } from '@/types/chat';
-import { User, Bot, Copy, Check } from 'lucide-react';
+import { User, Bot, Copy, Check, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -102,15 +102,44 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                 </div>
                 <span className="text-sm">Thinking...</span>
               </div>
-            ) : isUser ? (
-              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-                {message.content}
-              </p>
             ) : (
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-ul:my-2 prose-ol:my-2">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {message.content}
-                </ReactMarkdown>
+              <div className="space-y-2">
+                {message.uploaded_file_url && (
+                  <div className="mb-2">
+                    {message.uploaded_file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img 
+                        src={message.uploaded_file_url} 
+                        alt="Uploaded" 
+                        className="max-w-full rounded-lg border"
+                      />
+                    ) : (
+                      <audio controls className="w-full">
+                        <source src={message.uploaded_file_url} />
+                      </audio>
+                    )}
+                  </div>
+                )}
+                
+                {isUser ? (
+                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                    {message.content}
+                  </p>
+                ) : (
+                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-ul:my-2 prose-ol:my-2">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
+
+                {message.audio_output_url && !isUser && (
+                  <div className="mt-2 flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                    <Volume2 className="h-4 w-4" />
+                    <audio controls className="flex-1">
+                      <source src={message.audio_output_url} type="audio/mpeg" />
+                    </audio>
+                  </div>
+                )}
               </div>
             )}
           </div>

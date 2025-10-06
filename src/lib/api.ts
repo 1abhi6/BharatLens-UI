@@ -113,6 +113,34 @@ class ApiClient {
     return response.data;
   }
 
+  async sendMultimodalMessage(params: {
+    sessionId: string;
+    prompt?: string;
+    file?: File;
+    audioOutput?: boolean;
+    voiceStyle?: string;
+  }): Promise<{
+    assistant_message: string;
+    session_id: string;
+    message_id: string;
+    uploaded_file_url?: string;
+    audio_output_url?: string;
+  }> {
+    const formData = new FormData();
+    formData.append('session_id', params.sessionId);
+    if (params.prompt) formData.append('prompt', params.prompt);
+    if (params.file) formData.append('file', params.file);
+    if (params.audioOutput !== undefined) formData.append('audio_output', params.audioOutput.toString());
+    if (params.voiceStyle) formData.append('voice_style', params.voiceStyle);
+
+    const response = await this.client.post('/api/v1/multimodal/chat', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   async deleteSession(sessionId: string): Promise<void> {
     await this.client.delete(`/api/v1/chat/sessions/${sessionId}`);
   }

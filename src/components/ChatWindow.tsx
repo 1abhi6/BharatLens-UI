@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, ArrowDown } from 'lucide-react';
+import { Send, Loader2, ArrowDown, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MessageBubble } from './MessageBubble';
+import { AudioRecorder } from './AudioRecorder';
+import { ChatSettings } from './ChatSettings';
 import { api } from '@/lib/api';
-import { Message } from '@/types/chat';
+import { Message, VoiceStyle } from '@/types/chat';
 import { toast } from '@/hooks/use-toast';
 
 interface ChatWindowProps {
@@ -16,9 +18,13 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [audioOutput, setAudioOutput] = useState(false);
+  const [voiceStyle, setVoiceStyle] = useState<VoiceStyle>('alloy');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
@@ -70,10 +76,12 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || isSending) return;
+    if ((!input.trim() && !selectedFile) || isSending) return;
 
     const messageContent = input.trim();
+    const fileToSend = selectedFile;
     setInput('');
+    setSelectedFile(null);
     setIsSending(true);
     
     // Reset textarea height
@@ -85,7 +93,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     const tempUserMessage: Message = {
       id: `temp-user-${Date.now()}`,
       role: 'user',
-      content: messageContent,
+      content: messageContent || (fileToSend ? `[${fileToSend.type.startsWith('image/') ? 'Image' : 'Audio'} uploaded]` : ''),
       created_at: new Date().toISOString(),
     };
     
@@ -100,7 +108,13 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      const assistantResponse = await api.sendMessage(sessionId, messageContent);
+      const response = await api.sendMultimodalMessage({
+        sessionId,
+        prompt: messageContent || undefined,
+        file: fileToSend || undefined,
+        audioOutput,
+        voiceStyle,
+      });
       
       // Replace temp messages with real ones
       setMessages(prev => {
@@ -108,11 +122,20 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
           m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
         );
         const userMessage: Message = {
-          ...tempUserMessage,
-          id: `user-${Date.now()}`,
-          created_at: assistantResponse.created_at,
+          id: response.message_id,
+          role: 'user',
+          content: messageContent || (fileToSend ? `[${fileToSend.type.startsWith('image/') ? 'Image' : 'Audio'} uploaded]` : ''),
+          created_at: new Date().toISOString(),
+          uploaded_file_url: response.uploaded_file_url,
         };
-        return [...filtered, userMessage, assistantResponse];
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response.assistant_message,
+          created_at: new Date().toISOString(),
+          audio_output_url: response.audio_output_url,
+        };
+        return [...filtered, userMessage, assistantMessage];
       });
     } catch (error) {
       toast({
@@ -124,9 +147,34 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
       ));
       setInput(messageContent);
+      setSelectedFile(fileToSend);
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isImage = file.type.startsWith('image/');
+      const isAudio = file.type.startsWith('audio/');
+      
+      if (!isImage && !isAudio) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image or audio file",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
+  };
+
+  const handleAudioRecorded = (audioBlob: Blob) => {
+    const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+    setSelectedFile(file);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -186,7 +234,48 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       {/* Input area */}
       <div className="border-t border-border bg-card p-4">
         <div className="mx-auto max-w-4xl">
+          {selectedFile && (
+            <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">
+              <Paperclip className="h-4 w-4" />
+              <span>{selectedFile.name}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedFile(null)}
+                className="ml-auto h-6 px-2"
+              >
+                Remove
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2 items-end">
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,audio/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-10 w-10"
+                disabled={isSending}
+              >
+                <ImageIcon className="h-5 w-5" />
+              </Button>
+              <AudioRecorder onRecordingComplete={handleAudioRecorded} />
+              <ChatSettings
+                audioOutput={audioOutput}
+                voiceStyle={voiceStyle}
+                onAudioOutputChange={setAudioOutput}
+                onVoiceStyleChange={setVoiceStyle}
+              />
+            </div>
             <textarea
               ref={textareaRef}
               value={input}
@@ -205,7 +294,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
             />
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || isSending}
+              disabled={(!input.trim() && !selectedFile) || isSending}
               size="icon"
               className="h-[60px] w-[60px] flex-shrink-0 bg-gradient-to-r from-primary to-accent hover:opacity-90"
             >
