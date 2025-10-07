@@ -15,20 +15,24 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setIsOpen(true);
+      // Wait a bit for the dialog to open
+      setTimeout(async () => {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' } 
+        });
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
     } catch (error) {
       toast({
         title: "Camera access denied",
         description: "Please allow camera access to capture photos",
         variant: "destructive",
       });
+      setIsOpen(false);
     }
   };
 
@@ -62,12 +66,13 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
     <>
       <Button
         type="button"
-        size="icon"
-        variant="outline"
+        variant="ghost"
         onClick={startCamera}
-        className="h-10 w-10"
+        className="justify-start gap-2 w-full"
+        disabled={!navigator.mediaDevices}
       >
-        <Camera className="h-5 w-5" />
+        <Camera className="h-4 w-4" />
+        <span>Capture Photo</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && stopCamera()}>

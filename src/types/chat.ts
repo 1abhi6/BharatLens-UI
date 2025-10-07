@@ -25,7 +25,7 @@ export interface ChatSession {
 export interface Attachment {
   id: string;
   url: string | null;
-  media_type: "image" | null;
+  media_type: "image" | "audio" | null;
   metadata_: {
     filename?: string;
     voice_style?: string;

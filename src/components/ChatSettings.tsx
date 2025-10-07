@@ -34,8 +34,9 @@ export const ChatSettings = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" size="icon" variant="outline" className="h-10 w-10">
-          <Settings className="h-5 w-5" />
+        <Button type="button" variant="ghost" className="justify-start gap-2 w-full">
+          <Settings className="h-4 w-4" />
+          <span>Settings</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

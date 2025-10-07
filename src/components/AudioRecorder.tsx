@@ -52,12 +52,21 @@ export const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
   return (
     <Button
       type="button"
-      size="icon"
-      variant={isRecording ? "destructive" : "outline"}
+      variant={isRecording ? "destructive" : "ghost"}
       onClick={isRecording ? stopRecording : startRecording}
-      className="h-10 w-10"
+      className="justify-start gap-2 w-full"
     >
-      {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+      {isRecording ? (
+        <>
+          <Square className="h-4 w-4" />
+          <span>Stop Recording</span>
+        </>
+      ) : (
+        <>
+          <Mic className="h-4 w-4" />
+          <span>Record Audio</span>
+        </>
+      )}
     </Button>
   );
 };
