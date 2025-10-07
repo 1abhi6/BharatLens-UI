@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, ArrowDown, ImageIcon, Paperclip, Music } from 'lucide-react';
+import { Send, Loader2, ArrowDown, ImageIcon, Paperclip, Music, Plus, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MessageBubble } from './MessageBubble';
 import { AudioRecorder } from './AudioRecorder';
 import { CameraCapture } from './CameraCapture';
@@ -228,27 +229,25 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     }
   };
 
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="flex h-full flex-col bg-[hsl(var(--chat-bg))]">
+    <div className="flex h-full flex-col bg-[hsl(var(--chat-bg))] relative">
       {/* Messages area */}
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto relative"
+        className={`flex-1 overflow-y-auto relative transition-all duration-300 ${hasMessages ? '' : 'flex items-center justify-center'}`}
       >
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent">
-                <Send className="h-8 w-8 text-primary-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Start a conversation</h3>
-              <p className="text-sm text-muted-foreground">Send a message to begin</p>
-            </div>
+        ) : !hasMessages ? (
+          <div className="w-full max-w-3xl mx-auto px-4 flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
+            <h1 className="text-3xl sm:text-4xl font-semibold text-foreground mb-12 text-center">
+              What can I help with?
+            </h1>
           </div>
         ) : (
           <>
@@ -276,8 +275,8 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       </div>
 
       {/* Input area */}
-      <div className="border-t border-border bg-card p-4">
-        <div className="mx-auto max-w-4xl">
+      <div className={`border-t border-border bg-card transition-all duration-300 ${hasMessages ? 'p-4' : 'p-4'}`}>
+        <div className={`mx-auto transition-all duration-300 ${hasMessages ? 'max-w-4xl' : 'max-w-3xl'}`}>
           {selectedFile && (
             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">
               <Paperclip className="h-4 w-4" />
@@ -293,58 +292,69 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
               </Button>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
-            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-              {/* Image inputs */}
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                onClick={() => imageInputRef.current?.click()}
-                className="h-10 w-10 flex-shrink-0"
-                disabled={isSending}
-                title="Select image"
-              >
-                <ImageIcon className="h-5 w-5" />
-              </Button>
-              <CameraCapture onCapture={handleCameraCapture} />
-              
-              {/* Audio inputs */}
-              <input
-                ref={audioInputRef}
-                type="file"
-                accept="audio/*"
-                onChange={handleAudioFileSelect}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                onClick={() => audioInputRef.current?.click()}
-                className="h-10 w-10 flex-shrink-0"
-                disabled={isSending}
-                title="Select audio file"
-              >
-                <Music className="h-5 w-5" />
-              </Button>
-              <AudioRecorder onRecordingComplete={handleAudioRecorded} />
-              
-              <ChatSettings
-                audioOutput={audioOutput}
-                voiceStyle={voiceStyle}
-                onAudioOutputChange={setAudioOutput}
-                onVoiceStyleChange={setVoiceStyle}
-              />
-            </div>
-            <div className="flex gap-2 flex-1">
+          <div className="relative flex items-center gap-2">
+            {/* Add button with tools dropdown */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <input
+              ref={audioInputRef}
+              type="file"
+              accept="audio/*"
+              onChange={handleAudioFileSelect}
+              className="hidden"
+            />
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-10 w-10 flex-shrink-0 rounded-full hover:bg-accent"
+                  disabled={isSending}
+                  title="Add attachments"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    className="justify-start gap-2"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    <span>Upload Image</span>
+                  </Button>
+                  <CameraCapture onCapture={handleCameraCapture} />
+                  <Button
+                    variant="ghost"
+                    className="justify-start gap-2"
+                    onClick={() => audioInputRef.current?.click()}
+                  >
+                    <Music className="h-4 w-4" />
+                    <span>Upload Audio</span>
+                  </Button>
+                  <AudioRecorder onRecordingComplete={handleAudioRecorded} />
+                  <div className="border-t my-1" />
+                  <ChatSettings
+                    audioOutput={audioOutput}
+                    voiceStyle={voiceStyle}
+                    onAudioOutputChange={setAudioOutput}
+                    onVoiceStyleChange={setVoiceStyle}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            {/* Input with integrated send button */}
+            <div className="relative flex-1">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -355,9 +365,9 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     handleSend();
                   }
                 }}
-                placeholder="Type a message..."
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
-                style={{ minHeight: '60px', maxHeight: '150px' }}
+                placeholder="Message..."
+                className="w-full rounded-3xl border border-input bg-background pl-4 pr-12 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+                style={{ minHeight: '52px', maxHeight: '150px' }}
                 disabled={isSending}
                 rows={1}
               />
@@ -365,12 +375,13 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                 onClick={handleSend}
                 disabled={(!input.trim() && !selectedFile) || isSending}
                 size="icon"
-                className="h-[60px] w-[60px] flex-shrink-0 bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                variant="ghost"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full disabled:opacity-30 hover:bg-accent"
               >
                 {isSending ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5" />
+                  <ArrowUp className="h-5 w-5" />
                 )}
               </Button>
             </div>
