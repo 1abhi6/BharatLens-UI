@@ -15,20 +15,24 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setIsOpen(true);
+      // Wait a bit for the dialog to open
+      setTimeout(async () => {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' } 
+        });
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
     } catch (error) {
       toast({
         title: "Camera access denied",
         description: "Please allow camera access to capture photos",
         variant: "destructive",
       });
+      setIsOpen(false);
     }
   };
 
@@ -71,11 +75,10 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && stopCamera()}>
-        <DialogContent className="max-w-2xl" aria-describedby="camera-description">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Capture Photo</DialogTitle>
           </DialogHeader>
-          <p id="camera-description" className="sr-only">Use your camera to capture a photo</p>
           <div className="space-y-4">
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
               <video

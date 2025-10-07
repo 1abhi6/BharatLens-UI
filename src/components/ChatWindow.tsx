@@ -112,7 +112,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      await api.sendMultimodalMessage({
+      const response = await api.sendMultimodalMessage({
         sessionId,
         prompt: messageContent || undefined,
         file: fileToSend || undefined,
@@ -120,8 +120,51 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         voiceStyle,
       });
       
-      // Reload messages to get the full structure with attachments
-      await loadMessages();
+      // Build messages from response instead of reloading
+      const userMessage: Message = {
+        id: response.message_id || `user-${Date.now()}`,
+        role: 'user',
+        content: messageContent || (fileToSend ? 'Uploaded a file' : ''),
+        created_at: new Date().toISOString(),
+        attachments: response.uploaded_file_url ? [{
+          id: `attachment-${Date.now()}`,
+          url: response.uploaded_file_url,
+          media_type: fileToSend?.type.startsWith('image/') ? 'image' : 'audio',
+          metadata_: { filename: fileToSend?.name || '' },
+          audio_url: null,
+          created_at: new Date().toISOString(),
+        }] : [],
+      };
+      
+      const assistantMessage: Message = {
+        id: response.message_id,
+        role: 'assistant',
+        content: response.assistant_message,
+        created_at: new Date().toISOString(),
+        attachments: response.audio_output_url ? [{
+          id: `audio-${Date.now()}`,
+          url: response.uploaded_file_url || null,
+          media_type: response.uploaded_file_url ? 'image' : null,
+          metadata_: { voice_style: voiceStyle },
+          audio_url: response.audio_output_url,
+          created_at: new Date().toISOString(),
+        }] : response.uploaded_file_url ? [{
+          id: `img-${Date.now()}`,
+          url: response.uploaded_file_url,
+          media_type: 'image',
+          metadata_: {},
+          audio_url: null,
+          created_at: new Date().toISOString(),
+        }] : [],
+      };
+      
+      // Replace temp messages with actual ones
+      setMessages(prev => {
+        const filtered = prev.filter(m => 
+          m.id !== tempUserMessage.id && m.id !== tempAssistantMessage.id
+        );
+        return [...filtered, userMessage, assistantMessage];
+      });
     } catch (error) {
       toast({
         title: "Error sending message",
