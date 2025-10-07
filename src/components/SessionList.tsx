@@ -199,13 +199,14 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
                       </p>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
+                      <div
                         onClick={(e) => deleteSession(session.id, e)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 cursor-pointer"
+                        role="button"
                         aria-label="Delete chat"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
-                      </button>
+                      </div>
                       <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>

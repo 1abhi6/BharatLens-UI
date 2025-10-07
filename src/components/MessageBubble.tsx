@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { toast } from '@/hooks/use-toast';
+import { ImageViewer } from './ImageViewer';
 
 interface MessageBubbleProps {
   message: Message;
@@ -108,16 +109,15 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                 {message.attachments?.map((attachment) => (
                   <div key={attachment.id} className="mb-2">
                     {attachment.media_type === 'image' && attachment.url && (
-                      <img 
+                      <ImageViewer 
                         src={attachment.url} 
                         alt={attachment.metadata_?.filename || "Uploaded image"} 
-                        className="max-w-full rounded-lg border"
                       />
                     )}
                     {attachment.audio_url && (
                       <div className="mt-2 flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                        <Volume2 className="h-4 w-4" />
-                        <audio controls className="flex-1">
+                        <Volume2 className="h-4 w-4 flex-shrink-0" />
+                        <audio controls className="flex-1 max-w-full">
                           <source src={attachment.audio_url} type="audio/mpeg" />
                         </audio>
                       </div>

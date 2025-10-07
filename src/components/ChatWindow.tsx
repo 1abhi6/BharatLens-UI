@@ -112,7 +112,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      const response = await api.sendMultimodalMessage({
+      await api.sendMultimodalMessage({
         sessionId,
         prompt: messageContent || undefined,
         file: fileToSend || undefined,
@@ -238,7 +238,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
           {selectedFile && (
             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">
               <Paperclip className="h-4 w-4" />
-              <span>{selectedFile.name}</span>
+              <span className="truncate">{selectedFile.name}</span>
               <Button
                 type="button"
                 variant="ghost"
@@ -250,8 +250,8 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
               </Button>
             </div>
           )}
-          <div className="flex gap-2 items-end">
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
               {/* Image inputs */}
               <input
                 ref={imageInputRef}
@@ -265,7 +265,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                 size="icon"
                 variant="outline"
                 onClick={() => imageInputRef.current?.click()}
-                className="h-10 w-10"
+                className="h-10 w-10 flex-shrink-0"
                 disabled={isSending}
                 title="Select image"
               >
@@ -286,7 +286,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                 size="icon"
                 variant="outline"
                 onClick={() => audioInputRef.current?.click()}
-                className="h-10 w-10"
+                className="h-10 w-10 flex-shrink-0"
                 disabled={isSending}
                 title="Select audio file"
               >
@@ -301,34 +301,36 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                 onVoiceStyleChange={setVoiceStyle}
               />
             </div>
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder="Type a message..."
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
-              style={{ minHeight: '60px', maxHeight: '150px' }}
-              disabled={isSending}
-              rows={1}
-            />
-            <Button
-              onClick={handleSend}
-              disabled={(!input.trim() && !selectedFile) || isSending}
-              size="icon"
-              className="h-[60px] w-[60px] flex-shrink-0 bg-gradient-to-r from-primary to-accent hover:opacity-90"
-            >
-              {isSending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
+            <div className="flex gap-2 flex-1">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Type a message..."
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+                style={{ minHeight: '60px', maxHeight: '150px' }}
+                disabled={isSending}
+                rows={1}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={(!input.trim() && !selectedFile) || isSending}
+                size="icon"
+                className="h-[60px] w-[60px] flex-shrink-0 bg-gradient-to-r from-primary to-accent hover:opacity-90"
+              >
+                {isSending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -71,10 +71,11 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && stopCamera()}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="camera-description">
           <DialogHeader>
             <DialogTitle>Capture Photo</DialogTitle>
           </DialogHeader>
+          <p id="camera-description" className="sr-only">Use your camera to capture a photo</p>
           <div className="space-y-4">
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
               <video
