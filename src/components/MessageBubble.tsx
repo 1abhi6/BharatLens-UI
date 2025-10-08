@@ -158,7 +158,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                 <audio
                   controls
                   src={attachment.audio_url!}
-                  className="w-full h-10 rounded-lg [&::-webkit-media-controls-panel]:bg-background/50 [&::-webkit-media-controls-play-button]:text-primary"
+                  className="w-full h-10 rounded-lg [&::-webkit-media-controls-panel]:bg-background/50 [&::-webkit-media-controls-play-button]:text-primary [&::-webkit-media-controls-overflow-button]:hidden [&::-webkit-media-controls-download-button]:hidden"
                   style={{
                     filter: 'brightness(0.9) contrast(1.1)',
                   }}
