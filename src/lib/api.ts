@@ -128,10 +128,25 @@ class ApiClient {
   }> {
     const formData = new FormData();
     formData.append('session_id', params.sessionId);
-    if (params.prompt) formData.append('prompt', params.prompt);
-    if (params.file) formData.append('file', params.file);
-    if (params.audioOutput !== undefined) formData.append('audio_output', params.audioOutput.toString());
-    if (params.voiceStyle) formData.append('voice_style', params.voiceStyle);
+    
+    // Only append prompt if it exists
+    if (params.prompt) {
+      formData.append('prompt', params.prompt);
+    }
+    
+    // Only append file if it exists - critical to avoid 422 error
+    if (params.file) {
+      formData.append('file', params.file);
+    }
+    
+    // Only append audio settings if defined
+    if (params.audioOutput !== undefined) {
+      formData.append('audio_output', params.audioOutput.toString());
+    }
+    
+    if (params.voiceStyle) {
+      formData.append('voice_style', params.voiceStyle);
+    }
 
     const response = await this.client.post('/api/v1/multimodal/chat', formData, {
       headers: {
