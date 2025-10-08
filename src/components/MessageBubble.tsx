@@ -115,7 +115,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
         )}
       </div>
       
-      <div className={`flex max-w-[70%] flex-col ${isUser ? 'items-end' : ''} relative`}>
+      <div className={`flex max-w-[70%] flex-col ${isUser ? 'items-end' : ''}`}>
         <div className={`rounded-2xl px-4 py-2 ${
           isUser 
             ? "bg-[hsl(var(--chat-user))] text-[hsl(var(--chat-user-foreground))]" 
@@ -217,25 +217,27 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
           ))}
         </div>
         
-        {/* Copy button - positioned at bottom left */}
-        {!isLoading && message.content && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 left-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <Check className="h-3 w-3 text-green-500" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
-          </Button>
-        )}
-        
-        <span className="mt-1 text-xs text-muted-foreground">
-          {formatTime(message.created_at)}
-        </span>
+        <div className={`flex items-center gap-2 mt-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+          <span className="text-xs text-muted-foreground">
+            {formatTime(message.created_at)}
+          </span>
+          
+          {/* Copy button - positioned next to timestamp */}
+          {!isLoading && message.content && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <Check className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
