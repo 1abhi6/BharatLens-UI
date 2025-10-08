@@ -246,6 +246,18 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         });
         return;
       }
+      
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Image size must be less than 5MB. Please upload a smaller file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setSelectedFile(file);
     }
   };
@@ -261,6 +273,18 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         });
         return;
       }
+      
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Audio size must be less than 5MB. Please upload a smaller file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setSelectedFile(file);
     }
   };
@@ -293,7 +317,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       if (file.size > maxSize) {
         toast({
           title: "File too large",
-          description: "Document size must be less than 5MB",
+          description: "Document size must be less than 5MB. Please upload a smaller file.",
           variant: "destructive",
         });
         return;
@@ -418,7 +442,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     onClick={() => imageInputRef.current?.click()}
                   >
                     <ImageIcon className="h-4 w-4" />
-                    <span>Upload Image</span>
+                    <span>Upload Image <span className="text-xs text-muted-foreground">(max 5MB)</span></span>
                   </Button>
                   <CameraCapture onCapture={handleCameraCapture} />
                   <Button
@@ -427,7 +451,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     onClick={() => audioInputRef.current?.click()}
                   >
                     <Music className="h-4 w-4" />
-                    <span>Upload Audio</span>
+                    <span>Upload Audio <span className="text-xs text-muted-foreground">(max 5MB)</span></span>
                   </Button>
                   <AudioRecorder onRecordingComplete={handleAudioRecorded} />
                   <Button
@@ -436,7 +460,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     onClick={() => documentInputRef.current?.click()}
                   >
                     <FileText className="h-4 w-4" />
-                    <span>Upload Document</span>
+                    <span>Upload Document <span className="text-xs text-muted-foreground">(max 5MB)</span></span>
                   </Button>
                   <div className="border-t my-1" />
                   <ChatSettings
