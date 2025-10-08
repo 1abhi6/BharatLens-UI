@@ -10,6 +10,21 @@ interface MessageBubbleProps {
   message: Message;
 }
 
+// Helper function to determine file type from URL
+const getFileTypeFromUrl = (url: string): 'image' | 'audio' | 'document' | null => {
+  const extension = url.split('.').pop()?.toLowerCase();
+  
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+  const documentExtensions = ['pdf', 'docx', 'doc', 'txt', 'xlsx', 'xls', 'pptx', 'ppt'];
+  
+  if (extension && imageExtensions.includes(extension)) return 'image';
+  if (extension && audioExtensions.includes(extension)) return 'audio';
+  if (extension && documentExtensions.includes(extension)) return 'document';
+  
+  return null;
+}
+
 export const MessageBubble = ({ message }: MessageBubbleProps) => {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -132,7 +147,10 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
           )}
 
           {/* Image attachments */}
-          {message.attachments?.filter(att => att.media_type === 'image' && att.url).map((attachment) => (
+          {message.attachments?.filter(att => {
+            if (!att.url) return false;
+            return att.media_type === 'image' || getFileTypeFromUrl(att.url) === 'image';
+          }).map((attachment) => (
             <ImageViewer 
               key={attachment.id}
               src={attachment.url!} 
@@ -141,7 +159,15 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
           ))}
 
           {/* Document attachments (PDF, DOCX) */}
-          {message.attachments?.filter(att => att.url && att.media_type === null && att.metadata_?.filename).map((attachment) => (
+          {message.attachments?.filter(att => {
+            if (!att.url) return false;
+            // Check if it's a document based on URL extension
+            const fileType = getFileTypeFromUrl(att.url);
+            return fileType === 'document' || (att.media_type === null && att.metadata_?.filename);
+          }).map((attachment) => {
+            // Extract filename from URL if metadata is not available
+            const filename = attachment.metadata_?.filename || attachment.url!.split('/').pop()?.split('-').pop() || 'Document';
+            return (
             <a 
               key={attachment.id}
               href={attachment.url!}
@@ -149,19 +175,20 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
               rel="noopener noreferrer"
               className="mt-3 block"
             >
-              <div className="rounded-xl bg-muted/50 border border-border p-4 backdrop-blur-sm hover:bg-muted/70 transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{attachment.metadata_?.filename || 'Document'}</p>
-                    <p className="text-xs text-muted-foreground">Click to view document</p>
+                <div className="rounded-xl bg-muted/50 border border-border p-4 backdrop-blur-sm hover:bg-muted/70 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{filename}</p>
+                      <p className="text-xs text-muted-foreground">Click to view document</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </a>
-          ))}
+              </a>
+            );
+          })}
 
           {/* Audio attachments */}
           {message.attachments?.filter(att => att.audio_url).map((attachment) => (
