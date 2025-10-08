@@ -168,7 +168,9 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             const fullFilename = attachment.metadata_?.filename || attachment.url!.split('/').pop()?.split('-').pop() || 'Document';
             
             // Truncate long filenames intelligently (show start and extension)
-            const truncateFilename = (name: string, maxLength: number = 30) => {
+            const truncateFilename = (name: string) => {
+              // More aggressive truncation for mobile
+              const maxLength = window.innerWidth < 640 ? 18 : 30;
               if (name.length <= maxLength) return name;
               const extension = name.split('.').pop() || '';
               const nameWithoutExt = name.substring(0, name.lastIndexOf('.')) || name;
@@ -184,16 +186,16 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
               href={attachment.url!}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 block w-full max-w-sm"
+              className="mt-3 block w-full"
             >
-                <div className="rounded-xl bg-muted/50 border border-border p-4 backdrop-blur-sm hover:bg-muted/70 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-primary" />
+                <div className="rounded-xl bg-muted/50 border border-border p-3 sm:p-4 backdrop-blur-sm hover:bg-muted/70 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" title={fullFilename}>{displayName}</p>
-                      <p className="text-xs text-muted-foreground">Click to view document</p>
+                      <p className="text-xs sm:text-sm font-medium truncate break-all" title={fullFilename}>{displayName}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Click to view</p>
                     </div>
                   </div>
                 </div>
