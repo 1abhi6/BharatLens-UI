@@ -66,15 +66,29 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
       return;
     }
 
+    // Optimistic update: create temp session immediately
+    const tempSession: ChatSession = {
+      id: `temp-${Date.now()}`,
+      title,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    setSessions([tempSession, ...sessions]);
+    onSessionSelect(tempSession.id);
+    setIsDialogOpen(false);
+    
     try {
       const newSession = await api.createSession({ title });
-      setSessions([newSession, ...sessions]);
+      // Replace temp session with real one
+      setSessions(prev => prev.map(s => s.id === tempSession.id ? newSession : s));
       onSessionSelect(newSession.id);
-      setIsDialogOpen(false);
       toast({
         title: "New chat created",
       });
     } catch (error) {
+      // Remove temp session on error
+      setSessions(prev => prev.filter(s => s.id !== tempSession.id));
       toast({
         title: "Error creating chat",
         variant: "destructive",
@@ -84,16 +98,29 @@ export const SessionList = ({ activeSessionId, onSessionSelect, isOpen, onToggle
 
   const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent session selection when clicking delete
+    
+    // Optimistic update: remove immediately
+    const deletedSession = sessions.find(s => s.id === sessionId);
+    setSessions(sessions.filter(s => s.id !== sessionId));
+    
+    if (activeSessionId === sessionId) {
+      const remainingSessions = sessions.filter(s => s.id !== sessionId);
+      onSessionSelect(remainingSessions[0]?.id);
+    }
+    
+    toast({
+      title: "Chat deleted",
+    });
+    
     try {
       await api.deleteSession(sessionId);
-      setSessions(sessions.filter(s => s.id !== sessionId));
-      if (activeSessionId === sessionId) {
-        onSessionSelect(sessions[0]?.id);
-      }
-      toast({
-        title: "Chat deleted",
-      });
     } catch (error) {
+      // Restore session on error
+      if (deletedSession) {
+        setSessions(prev => [deletedSession, ...prev].sort((a, b) => 
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        ));
+      }
       toast({
         title: "Error deleting chat",
         variant: "destructive",

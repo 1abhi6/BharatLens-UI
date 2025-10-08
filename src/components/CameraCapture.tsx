@@ -76,12 +76,12 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && stopCamera()}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] max-w-2xl mx-auto">
           <DialogHeader>
             <DialogTitle>Capture Photo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden w-full">
               <video
                 ref={videoRef}
                 autoPlay
@@ -89,12 +89,12 @@ export const CameraCapture = ({ onCapture }: CameraCaptureProps) => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={stopCamera}>
+            <div className="flex gap-2 justify-end flex-col sm:flex-row">
+              <Button variant="outline" onClick={stopCamera} className="w-full sm:w-auto">
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
-              <Button onClick={capturePhoto}>
+              <Button onClick={capturePhoto} className="w-full sm:w-auto">
                 <Camera className="h-4 w-4 mr-2" />
                 Capture
               </Button>
