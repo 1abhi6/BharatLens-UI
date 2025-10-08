@@ -363,18 +363,6 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
               <div ref={messagesEndRef} />
             </div>
             
-            {/* Scroll to bottom button with fade animation */}
-            <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ${
-              showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-            }`}>
-              <Button
-                size="icon"
-                className="h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 transition-all duration-200"
-                onClick={() => scrollToBottom()}
-              >
-                <ArrowDown className="h-5 w-5" />
-              </Button>
-            </div>
           </>
         )}
       </div>
@@ -460,7 +448,10 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     onClick={() => documentInputRef.current?.click()}
                   >
                     <FileText className="h-4 w-4" />
-                    <span>Upload Document <span className="text-xs text-muted-foreground">(max 5MB)</span></span>
+                    <div className="flex flex-col items-start">
+                      <span>Upload Document</span>
+                      <span className="text-xs text-muted-foreground">(max 5MB)</span>
+                    </div>
                   </Button>
                   <div className="border-t my-1" />
                   <ChatSettings
