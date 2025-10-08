@@ -405,7 +405,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
             <input
               ref={documentInputRef}
               type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleDocumentSelect}
               className="hidden"
             />
