@@ -170,7 +170,8 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         content: response.assistant_message,
         created_at: new Date().toISOString(),
         attachments,
-      };
+        isNew: true // Flag for typewriter effect
+      } as any;
       
       // Replace temp messages with actual ones
       setMessages(prev => {

@@ -15,10 +15,11 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
   const [displayedContent, setDisplayedContent] = useState('');
   const isUser = message.role === 'user';
   const isLoading = message.role === 'assistant' && !message.content;
+  const hasAudioOutput = message.attachments?.some(att => att.audio_url);
 
-  // Typewriter effect for assistant messages
+  // Typewriter effect for NEW assistant messages only
   useEffect(() => {
-    if (message.role === 'assistant' && message.content) {
+    if (message.role === 'assistant' && message.content && (message as any).isNew) {
       let currentIndex = 0;
       setDisplayedContent('');
       
@@ -29,7 +30,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
         } else {
           clearInterval(interval);
         }
-      }, 10); // Adjust speed here (lower = faster)
+      }, 10);
 
       return () => clearInterval(interval);
     } else {
@@ -114,14 +115,18 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             </div>
           ) : (
             <>
-              {isUser ? (
-                <p className="whitespace-pre-wrap break-words">{displayedContent}</p>
-              ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {displayedContent}
-                  </ReactMarkdown>
-                </div>
+              {!hasAudioOutput && (
+                <>
+                  {isUser ? (
+                    <p className="whitespace-pre-wrap break-words text-sm md:text-base">{displayedContent}</p>
+                  ) : (
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:text-sm [&_p]:md:text-base">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {displayedContent}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
