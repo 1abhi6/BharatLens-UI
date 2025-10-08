@@ -121,13 +121,23 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      const response = await api.sendMultimodalMessage({
-        sessionId,
-        prompt: messageContent || undefined,
-        file: fileToSend || undefined,
-        audioOutput,
-        voiceStyle,
-      });
+      // Build params object, only including properties that have values
+      const params: any = { sessionId };
+      
+      if (messageContent) {
+        params.prompt = messageContent;
+      }
+      
+      if (fileToSend) {
+        params.file = fileToSend;
+      }
+      
+      if (audioOutput) {
+        params.audioOutput = audioOutput;
+        params.voiceStyle = voiceStyle;
+      }
+      
+      const response = await api.sendMultimodalMessage(params);
       
       // Build messages from response instead of reloading
       const getMediaType = (file: File): "image" | "audio" | null => {
