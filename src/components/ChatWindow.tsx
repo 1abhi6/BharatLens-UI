@@ -124,8 +124,16 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       // Build params object, only including properties that have values
       const params: any = { sessionId };
       
+      // Always include prompt - use message content or default for file uploads
       if (messageContent) {
         params.prompt = messageContent;
+      } else if (fileToSend) {
+        // Provide a default prompt when only file is uploaded
+        params.prompt = fileToSend.type.startsWith('image/') 
+          ? 'What can you see in this image?' 
+          : fileToSend.type.startsWith('audio/')
+          ? 'What can you hear in this audio?'
+          : 'What can you see in this document?';
       }
       
       if (fileToSend) {
