@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, ArrowDown, ImageIcon, Paperclip, Music, Plus, ArrowUp } from 'lucide-react';
+import { Send, Loader2, ArrowDown, ImageIcon, Paperclip, Music, Plus, ArrowUp, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MessageBubble } from './MessageBubble';
@@ -28,6 +28,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
@@ -93,10 +94,17 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     }
 
     // Optimistically add user message
+    const getFileTypeLabel = (file: File) => {
+      if (file.type.startsWith('image/')) return 'Image';
+      if (file.type.startsWith('audio/')) return 'Audio';
+      if (file.type === 'application/pdf' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'Document';
+      return 'File';
+    };
+    
     const tempUserMessage: Message = {
       id: `temp-user-${Date.now()}`,
       role: 'user',
-      content: messageContent || (fileToSend ? `[${fileToSend.type.startsWith('image/') ? 'Image' : 'Audio'} uploaded]` : ''),
+      content: messageContent || (fileToSend ? `[${getFileTypeLabel(fileToSend)} uploaded]` : ''),
       created_at: new Date().toISOString(),
       attachments: [],
     };
@@ -122,6 +130,12 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
       });
       
       // Build messages from response instead of reloading
+      const getMediaType = (file: File): "image" | "audio" | null => {
+        if (file.type.startsWith('image/')) return 'image';
+        if (file.type.startsWith('audio/')) return 'audio';
+        return null;
+      };
+      
       const userMessage: Message = {
         id: response.message_id || `user-${Date.now()}`,
         role: 'user',
@@ -130,7 +144,7 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         attachments: response.uploaded_file_url ? [{
           id: `attachment-${Date.now()}`,
           url: response.uploaded_file_url,
-          media_type: fileToSend?.type.startsWith('image/') ? 'image' : 'audio',
+          media_type: getMediaType(fileToSend!),
           metadata_: { filename: fileToSend?.name || '' },
           audio_url: null,
           created_at: new Date().toISOString(),
@@ -146,7 +160,22 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
           id: `img-${Date.now()}`,
           url: response.uploaded_file_url,
           media_type: 'image',
-          metadata_: {},
+          metadata_: { filename: fileToSend.name },
+          audio_url: null,
+          created_at: new Date().toISOString(),
+        });
+      }
+      
+      // Add document attachment if present (PDF or DOCX)
+      if (response.uploaded_file_url && fileToSend && (
+        fileToSend.type === 'application/pdf' || 
+        fileToSend.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )) {
+        attachments.push({
+          id: `doc-${Date.now()}`,
+          url: response.uploaded_file_url,
+          media_type: null,
+          metadata_: { filename: fileToSend.name },
           audio_url: null,
           created_at: new Date().toISOString(),
         });
@@ -236,6 +265,34 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setSelectedFile(file);
   };
 
+  const handleDocumentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a PDF or DOCX file",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Document size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -322,6 +379,13 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
               onChange={handleAudioFileSelect}
               className="hidden"
             />
+            <input
+              ref={documentInputRef}
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={handleDocumentSelect}
+              className="hidden"
+            />
             
             <Popover>
               <PopoverTrigger asChild>
@@ -356,6 +420,14 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
                     <span>Upload Audio</span>
                   </Button>
                   <AudioRecorder onRecordingComplete={handleAudioRecorded} />
+                  <Button
+                    variant="ghost"
+                    className="justify-start gap-2"
+                    onClick={() => documentInputRef.current?.click()}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Upload Document</span>
+                  </Button>
                   <div className="border-t my-1" />
                   <ChatSettings
                     audioOutput={audioOutput}
