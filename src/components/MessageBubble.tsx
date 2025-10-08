@@ -165,14 +165,26 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             return fileType === 'document' || (att.media_type === null && att.metadata_?.filename);
           }).map((attachment) => {
             // Extract filename from URL if metadata is not available
-            const filename = attachment.metadata_?.filename || attachment.url!.split('/').pop()?.split('-').pop() || 'Document';
+            const fullFilename = attachment.metadata_?.filename || attachment.url!.split('/').pop()?.split('-').pop() || 'Document';
+            
+            // Truncate long filenames intelligently (show start and extension)
+            const truncateFilename = (name: string, maxLength: number = 30) => {
+              if (name.length <= maxLength) return name;
+              const extension = name.split('.').pop() || '';
+              const nameWithoutExt = name.substring(0, name.lastIndexOf('.')) || name;
+              const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 4);
+              return `${truncatedName}...${extension}`;
+            };
+            
+            const displayName = truncateFilename(fullFilename);
+            
             return (
             <a 
               key={attachment.id}
               href={attachment.url!}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 block"
+              className="mt-3 block w-full max-w-sm"
             >
                 <div className="rounded-xl bg-muted/50 border border-border p-4 backdrop-blur-sm hover:bg-muted/70 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
@@ -180,7 +192,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                       <FileText className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{filename}</p>
+                      <p className="text-sm font-medium truncate" title={fullFilename}>{displayName}</p>
                       <p className="text-xs text-muted-foreground">Click to view document</p>
                     </div>
                   </div>
