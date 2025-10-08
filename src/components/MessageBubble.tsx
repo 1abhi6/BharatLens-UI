@@ -115,13 +115,12 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
         )}
       </div>
       
-      <div className={`flex max-w-[70%] flex-col ${isUser ? 'items-end' : ''}`}>
-        <div className="flex items-start gap-2">
-          <div className={`rounded-2xl px-4 py-2 ${
-            isUser 
-              ? "bg-[hsl(var(--chat-user))] text-[hsl(var(--chat-user-foreground))]" 
-              : "bg-[hsl(var(--chat-assistant))] text-[hsl(var(--chat-assistant-foreground))]"
-          }`}>
+      <div className={`flex max-w-[70%] flex-col ${isUser ? 'items-end' : ''} relative`}>
+        <div className={`rounded-2xl px-4 py-2 ${
+          isUser 
+            ? "bg-[hsl(var(--chat-user))] text-[hsl(var(--chat-user-foreground))]" 
+            : "bg-[hsl(var(--chat-assistant))] text-[hsl(var(--chat-assistant-foreground))]"
+        }`}>
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -216,26 +215,23 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
               </div>
             </div>
           ))}
-          </div>
-          
-          {/* Copy button */}
-          {!isLoading && message.content && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity ${
-                isUser ? 'order-first' : ''
-              }`}
-              onClick={handleCopy}
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          )}
         </div>
+        
+        {/* Copy button - positioned at bottom left */}
+        {!isLoading && message.content && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-0 left-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <Check className="h-3 w-3 text-green-500" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </Button>
+        )}
         
         <span className="mt-1 text-xs text-muted-foreground">
           {formatTime(message.created_at)}
