@@ -205,7 +205,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
 
           {/* Audio attachments */}
           {message.attachments?.filter(att => att.audio_url).map((attachment) => (
-            <div key={attachment.id} className="mt-3 w-full max-w-md">
+            <div key={attachment.id} className="mt-3 w-full">
               <div className="rounded-xl bg-muted/50 border border-border p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -221,7 +221,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                 <audio
                   controls
                   src={attachment.audio_url!}
-                  className="w-full h-10 rounded-lg [&::-webkit-media-controls-panel]:bg-background/50 [&::-webkit-media-controls-play-button]:text-primary [&::-webkit-media-controls-overflow-button]:hidden [&::-webkit-media-controls-download-button]:hidden"
+                  className="w-full h-10 rounded-lg [&::-webkit-media-controls-panel]:bg-background/50 [&::-webkit-media-controls-play-button]:text-primary [&::-webkit-media-controls-download-button]:hidden"
                   style={{
                     filter: 'brightness(0.9) contrast(1.1)',
                   }}
