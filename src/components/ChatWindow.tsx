@@ -137,26 +137,39 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
         }] : [],
       };
       
-      const assistantMessage: Message = {
-        id: response.message_id,
-        role: 'assistant',
-        content: response.assistant_message,
-        created_at: new Date().toISOString(),
-        attachments: response.audio_output_url ? [{
-          id: `audio-${Date.now()}`,
-          url: response.uploaded_file_url || null,
-          media_type: response.uploaded_file_url ? 'image' : null,
-          metadata_: { voice_style: voiceStyle },
-          audio_url: response.audio_output_url,
-          created_at: new Date().toISOString(),
-        }] : response.uploaded_file_url ? [{
+      // Build attachments array properly
+      const attachments: Message['attachments'] = [];
+      
+      // Add image attachment if present
+      if (response.uploaded_file_url && fileToSend?.type.startsWith('image/')) {
+        attachments.push({
           id: `img-${Date.now()}`,
           url: response.uploaded_file_url,
           media_type: 'image',
           metadata_: {},
           audio_url: null,
           created_at: new Date().toISOString(),
-        }] : [],
+        });
+      }
+      
+      // Add audio attachment if present
+      if (response.audio_output_url) {
+        attachments.push({
+          id: `audio-${Date.now()}`,
+          url: null,
+          media_type: 'audio',
+          metadata_: { voice_style: voiceStyle },
+          audio_url: response.audio_output_url,
+          created_at: new Date().toISOString(),
+        });
+      }
+      
+      const assistantMessage: Message = {
+        id: response.message_id,
+        role: 'assistant',
+        content: response.assistant_message,
+        created_at: new Date().toISOString(),
+        attachments,
       };
       
       // Replace temp messages with actual ones
