@@ -121,20 +121,21 @@ export const ChatWindow = ({ sessionId }: ChatWindowProps) => {
     setMessages(prev => [...prev, tempUserMessage, tempAssistantMessage]);
 
     try {
-      // Build params object, only including properties that have values
-      const params: any = { sessionId };
+      // Build params object according to API spec
+      const params: any = { 
+        sessionId,
+        audioOutput,  // Required, default false
+        voiceStyle    // Required, default 'alloy'
+      };
       
+      // Only include prompt if user provided one (optional)
       if (messageContent) {
         params.prompt = messageContent;
       }
       
+      // Only include file if user uploaded one (optional)
       if (fileToSend) {
         params.file = fileToSend;
-      }
-      
-      if (audioOutput) {
-        params.audioOutput = audioOutput;
-        params.voiceStyle = voiceStyle;
       }
       
       const response = await api.sendMultimodalMessage(params);
